@@ -35,6 +35,8 @@ if COOKIE_DOMAIN_VALUE.present?
     end
   end
 
+  Rails.configuration.middleware.insert_before(ActionDispatch::Cookies, ::CookieDomainMiddleware)
+
   after_initialize do
     Rails.logger.info "[CookieDomain] DISCOURSE_COOKIE_DOMAIN=#{COOKIE_DOMAIN_VALUE.inspect}"
     # Duplicate session cookie to the configured domain
@@ -56,8 +58,5 @@ if COOKIE_DOMAIN_VALUE.present?
            )
       ActionDispatch::Session::DiscourseCookieStore.prepend(::CookieDomainSessionExtension)
     end
-
-    Rails.application.config.middleware.insert_before(ActionDispatch::Cookies, ::CookieDomainMiddleware)
-    Rails.logger.info "[CookieDomain] Middleware registered before ActionDispatch::Cookies"
   end
 end
