@@ -43,29 +43,4 @@ if COOKIE_DOMAIN_VALUE.present?
   end
 
   Rails.configuration.middleware.insert_before(ActionDispatch::Cookies, ::CookieDomainMiddleware)
-
-  after_initialize do
-    Rails.logger.info "[CookieDomain] DISCOURSE_COOKIE_DOMAIN=#{COOKIE_DOMAIN_VALUE.inspect}"
-    # Duplicate session cookie to the configured domain
-    module ::CookieDomainSessionExtension
-      def set_cookie(request, session_id, cookie)
-        super
-
-        if Hash === cookie
-          extra_cookie = cookie.dup
-          extra_cookie[:domain] = COOKIE_DOMAIN_VALUE
-          extra_cookie[:same_site] = :none
-          extra_cookie[:secure] = true
-          Rails.logger.debug "[CookieDomain] SessionExtension: duplicating session cookie with Domain=#{COOKIE_DOMAIN_VALUE}; SameSite=None; Secure"
-          cookie_jar(request)[@key] = extra_cookie
-        end
-      end
-    end
-
-    unless ActionDispatch::Session::DiscourseCookieStore.ancestors.include?(
-             ::CookieDomainSessionExtension,
-           )
-      ActionDispatch::Session::DiscourseCookieStore.prepend(::CookieDomainSessionExtension)
-    end
-  end
 end
