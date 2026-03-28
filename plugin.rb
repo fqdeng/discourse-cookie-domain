@@ -21,14 +21,16 @@ if COOKIE_DOMAIN_VALUE.present?
         Rails.logger.debug "[CookieDomain] Middleware: found #{original_cookies.size} cookie(s) for #{env["REQUEST_PATH"]}"
 
         extra_cookies =
-          original_cookies.map do |cookie_str|
+          original_cookies.filter_map do |cookie_str|
+            next unless cookie_str.start_with?("_t=")
+
             if cookie_str =~ /[;\s]domain=/i
               cookie_str.gsub(/(\s*;\s*)domain=[^;]*/i, "\\1Domain=#{COOKIE_DOMAIN_VALUE}")
             else
               "#{cookie_str}; Domain=#{COOKIE_DOMAIN_VALUE}"
             end
           end
-        headers["Set-Cookie"] = (original_cookies + extra_cookies).join("\n")
+        headers["Set-Cookie"] = (original_cookies + extra_cookies).join("\n") if extra_cookies.any?
       end
 
       [status, headers, body]
