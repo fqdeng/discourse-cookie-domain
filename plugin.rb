@@ -1,21 +1,8 @@
-# frozen_string_literal: true
-# ↑ 告诉 Ruby 解释器：本文件中所有字符串默认是不可变的（frozen），可以提升性能
-
 # name: discourse-cookie-domain
 # about: Duplicates cookies to an additional domain from DISCOURSE_COOKIE_DOMAIN environment variable
 # version: 0.2
 # authors: Discourse
-
-# ===== 插件元数据说明 =====
-# name:    插件名称
-# about:   插件说明：将 cookie 复制一份到环境变量指定的额外域名
-# version: 插件版本号
-# authors: 作者
-#
-# 通过环境变量配置，例如：DISCOURSE_COOKIE_DOMAIN=.vibe-coding.sh
-# 原始 cookie 保持不变，会额外写入一份带有配置域名的 cookie 副本
-
-# 从环境变量 DISCOURSE_COOKIE_DOMAIN 读取要附加的域名，存到常量中
+# frozen_string_literal: true
 COOKIE_DOMAIN_VALUE = ENV["DISCOURSE_COOKIE_DOMAIN"]
 
 # .present? 检查值是否存在且不为空字符串（Rails 提供的方法）
