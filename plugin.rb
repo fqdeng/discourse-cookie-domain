@@ -6,8 +6,6 @@
 # authors: Discourse
 COOKIE_DOMAIN_VALUE = ENV["DISCOURSE_COOKIE_DOMAIN"]
 
-Rails.logger.info "[CookieDomain] DISCOURSE_COOKIE_DOMAIN=#{COOKIE_DOMAIN_VALUE.inspect}"
-
 if COOKIE_DOMAIN_VALUE.present?
   # Middleware to duplicate all Set-Cookie headers with the configured domain
   class ::CookieDomainMiddleware
@@ -38,6 +36,7 @@ if COOKIE_DOMAIN_VALUE.present?
   end
 
   after_initialize do
+    Rails.logger.info "[CookieDomain] DISCOURSE_COOKIE_DOMAIN=#{COOKIE_DOMAIN_VALUE.inspect}"
     # Duplicate session cookie to the configured domain
     module ::CookieDomainSessionExtension
       def set_cookie(request, session_id, cookie)
@@ -61,6 +60,4 @@ if COOKIE_DOMAIN_VALUE.present?
     Rails.application.config.middleware.insert_before(ActionDispatch::Cookies, ::CookieDomainMiddleware)
     Rails.logger.info "[CookieDomain] Middleware registered before ActionDispatch::Cookies"
   end
-else
-  Rails.logger.warn "[CookieDomain] Plugin disabled: DISCOURSE_COOKIE_DOMAIN is not set"
 end
