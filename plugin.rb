@@ -24,11 +24,16 @@ if COOKIE_DOMAIN_VALUE.present?
           original_cookies.filter_map do |cookie_str|
             next unless cookie_str.start_with?("_t=")
 
-            if cookie_str =~ /[;\s]domain=/i
-              cookie_str.gsub(/(\s*;\s*)domain=[^;]*/i, "\\1Domain=#{COOKIE_DOMAIN_VALUE}")
-            else
-              "#{cookie_str}; Domain=#{COOKIE_DOMAIN_VALUE}"
-            end
+            duped =
+              if cookie_str =~ /[;\s]domain=/i
+                cookie_str.gsub(/(\s*;\s*)domain=[^;]*/i, "\\1Domain=#{COOKIE_DOMAIN_VALUE}")
+              else
+                "#{cookie_str}; Domain=#{COOKIE_DOMAIN_VALUE}"
+              end
+
+            duped = duped.gsub(/(\s*;\s*)SameSite=[^;]*/i, "") if duped =~ /[;\s]SameSite=/i
+            duped = duped.gsub(/(\s*;\s*)Secure\b/i, "") if duped =~ /[;\s]Secure\b/i
+            "#{duped}; SameSite=None; Secure"
           end
         headers["Set-Cookie"] = (original_cookies + extra_cookies).join("\n") if extra_cookies.any?
       end
@@ -49,7 +54,9 @@ if COOKIE_DOMAIN_VALUE.present?
         if Hash === cookie
           extra_cookie = cookie.dup
           extra_cookie[:domain] = COOKIE_DOMAIN_VALUE
-          Rails.logger.debug "[CookieDomain] SessionExtension: duplicating session cookie with Domain=#{COOKIE_DOMAIN_VALUE}"
+          extra_cookie[:same_site] = :none
+          extra_cookie[:secure] = true
+          Rails.logger.debug "[CookieDomain] SessionExtension: duplicating session cookie with Domain=#{COOKIE_DOMAIN_VALUE}; SameSite=None; Secure"
           cookie_jar(request)[@key] = extra_cookie
         end
       end
