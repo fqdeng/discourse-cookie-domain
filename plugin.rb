@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 # name: discourse-cookie-domain
 # about: Duplicates cookies to an additional domain from DISCOURSE_COOKIE_DOMAIN environment variable
 # version: 0.2
 # authors: Discourse
-# frozen_string_literal: true
 COOKIE_DOMAIN_VALUE = ENV["DISCOURSE_COOKIE_DOMAIN"]
 
 # .present? 检查值是否存在且不为空字符串（Rails 提供的方法）
