@@ -4,13 +4,6 @@
 # about: Duplicates cookies to an additional domain from DISCOURSE_COOKIE_DOMAIN environment variable
 # version: 0.2
 # authors: Discourse
-#
-# Configure via environment variable:
-#   DISCOURSE_COOKIE_DOMAIN=.vibe-coding.sh
-#
-# Original cookies are preserved as-is. An additional copy of each cookie
-# is written with the configured domain.
-
 COOKIE_DOMAIN_VALUE = ENV["DISCOURSE_COOKIE_DOMAIN"]
 
 if COOKIE_DOMAIN_VALUE.present?
