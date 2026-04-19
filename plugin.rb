@@ -45,8 +45,7 @@ if COOKIE_DOMAIN_VALUE.present?
   # Middleware to honour /login?redirect_url=... (and /signup?redirect_url=...) by
   # writing Discourse's native destination_url cookie before the request reaches
   # the controller. After a successful login Discourse reads this cookie and
-  # redirects the user to the target URL. The URL is restricted to the cookie
-  # domain and its subdomains to prevent open-redirect phishing.
+  # redirects the user to the target URL.
   class ::LoginRedirectUrlMiddleware
     LOGIN_PATHS = %w[/login /signup].freeze
 
@@ -77,20 +76,8 @@ if COOKIE_DOMAIN_VALUE.present?
       url = Rack::Request.new(env).params["redirect_url"]
       return nil if url.blank?
 
-      valid_redirect_url?(url) ? url : nil
-    end
-
-    def valid_redirect_url?(url)
-      return true if url.start_with?("/") && !url.start_with?("//")
-
-      uri = URI.parse(url)
-      return false unless %w[http https].include?(uri.scheme)
-
-      host = uri.host.to_s.downcase
-      domain = COOKIE_DOMAIN_VALUE.to_s.downcase
-      host == domain || host.end_with?(".#{domain}")
-    rescue URI::InvalidURIError
-      false
+      # Strip CR/LF to prevent response header injection; otherwise accept as-is.
+      url.delete("\r\n")
     end
   end
 
