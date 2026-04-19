@@ -42,5 +42,58 @@ if COOKIE_DOMAIN_VALUE.present?
     end
   end
 
+  # Middleware to honour /login?redirect_url=... (and /signup?redirect_url=...) by
+  # writing Discourse's native destination_url cookie before the request reaches
+  # the controller. After a successful login Discourse reads this cookie and
+  # redirects the user to the target URL. The URL is restricted to the cookie
+  # domain and its subdomains to prevent open-redirect phishing.
+  class ::LoginRedirectUrlMiddleware
+    LOGIN_PATHS = %w[/login /signup].freeze
+
+    def initialize(app)
+      @app = app
+    end
+
+    def call(env)
+      redirect_url = extract_redirect_url(env)
+      status, headers, body = @app.call(env)
+
+      if redirect_url
+        cookie = "destination_url=#{CGI.escape(redirect_url)}; Path=/; Secure; SameSite=Lax"
+        existing = headers["Set-Cookie"]
+        headers["Set-Cookie"] = existing.present? ? "#{existing}\n#{cookie}" : cookie
+        Rails.logger.debug "[CookieDomain] LoginRedirect: set destination_url for #{env["PATH_INFO"]}"
+      end
+
+      [status, headers, body]
+    end
+
+    private
+
+    def extract_redirect_url(env)
+      return nil unless env["REQUEST_METHOD"] == "GET"
+      return nil unless LOGIN_PATHS.include?(env["PATH_INFO"])
+
+      url = Rack::Request.new(env).params["redirect_url"]
+      return nil if url.blank?
+
+      valid_redirect_url?(url) ? url : nil
+    end
+
+    def valid_redirect_url?(url)
+      return true if url.start_with?("/") && !url.start_with?("//")
+
+      uri = URI.parse(url)
+      return false unless %w[http https].include?(uri.scheme)
+
+      host = uri.host.to_s.downcase
+      domain = COOKIE_DOMAIN_VALUE.to_s.downcase
+      host == domain || host.end_with?(".#{domain}")
+    rescue URI::InvalidURIError
+      false
+    end
+  end
+
   Rails.configuration.middleware.insert_before(ActionDispatch::Cookies, ::CookieDomainMiddleware)
+  Rails.configuration.middleware.insert_before(ActionDispatch::Cookies, ::LoginRedirectUrlMiddleware)
 end
