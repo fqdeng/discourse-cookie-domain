@@ -58,10 +58,10 @@ if COOKIE_DOMAIN_VALUE.present?
       status, headers, body = @app.call(env)
 
       if redirect_url
-        cookie = "destination_url=#{CGI.escape(redirect_url)}; Path=/; Secure; SameSite=Lax"
+        cookie = "plugin_redirect_url=#{CGI.escape(redirect_url)}; Path=/; Secure; SameSite=Lax"
         existing = headers["Set-Cookie"]
         headers["Set-Cookie"] = existing.present? ? "#{existing}\n#{cookie}" : cookie
-        Rails.logger.debug "[CookieDomain] LoginRedirect: set destination_url for #{env["PATH_INFO"]}"
+        Rails.logger.debug "[CookieDomain] LoginRedirect: set plugin_redirect_url for #{env["PATH_INFO"]}"
       end
 
       [status, headers, body]
